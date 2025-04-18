@@ -2,6 +2,8 @@
 
 A pluggable secret scanner that can produce results in SARIF format.
 
+Goal is to build a pluggable secret and sensitive data scanner that can be used in developer flows, CI/CD pipelines, data protection and other security tools.
+
 ## Installation
 
 ```bash
@@ -27,10 +29,16 @@ This creates a directory `~/.blacklight` and writes initial configuration file w
 ## Usage
 
 ```bash
-blacklight scan <path>
+blacklight scan .
 ```
 
 To ignore certain directories:
 ```bash
 blacklight scan <path> --ignore=<dir1>,<dir2>
 ```
+
+To ignore scan and generate SARIF report:
+```bash
+blacklight scan <path> --ignore=<dir1>,<dir2> --sarif
+```
+
