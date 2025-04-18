@@ -7,7 +7,7 @@ echo "arch=$arch"
 echo "Detected OS: $os"
 echo "Detected ARCH: $arch"
 
-curl -o blacklight https://github.com/adaptive-scale/blacklight/releases/download/v0.1.0/blacklight_$(os)_$(arch)
+curl -o blacklight https://github.com/adaptive-scale/blacklight/releases/download/v0.1.1/blacklight_$(os)_$(arch)
 chmod +x blacklight
 sudo mv blacklight /usr/local/bin/
 

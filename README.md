@@ -5,7 +5,7 @@ A pluggable secret scanner that can produce results in SARIF format.
 ## Installation
 
 ```bash
-curl -Lo blacklight https://github.com/adaptive-scale/blacklight/releases/download/v0.1.0/blacklight_$(uname -s | tr '[:upper:]' '[:lower:]')_$(arch)
+curl -Lo blacklight https://github.com/adaptive-scale/blacklight/releases/download/v0.1.1/blacklight_$(uname -s | tr '[:upper:]' '[:lower:]')_$(arch)
 chmod +x blacklight
 sudo mv blacklight /usr/local/bin/
 ```
