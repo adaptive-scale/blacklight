@@ -5,6 +5,7 @@ Copyright © 2025 Debarshi Basak <debarshi@adaptive.live>
 package cmd
 
 import (
+	"blacklight/internal/scanner"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -40,7 +41,7 @@ Should generate all configuration and scanner regexes.
 
 		join := path.Join(home, ".blacklight", "config.json")
 
-		d, err := json.Marshal(Regex)
+		d, err := json.Marshal(scanner.Regex)
 		if err != nil {
 			fmt.Println("Error marshalling configuration:", err)
 			return
