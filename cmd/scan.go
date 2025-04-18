@@ -38,7 +38,7 @@ blacklight scan /path/to/dir
 	Run: func(cmd *cobra.Command, args []string) {
 
 		ignore, _ := cmd.Flags().GetString("ignore")
-		//ignoreSelective, _ := cmd.Flags().GetString("ignore-selective")
+		sarif, _ := cmd.Flags().GetBool("sarif")
 
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -107,27 +107,23 @@ blacklight scan /path/to/dir
 
 		s.SetVerbose(verbose)
 		//s.AddIgnoreSelective(ignoreSelective)
-		s.StartScan(dir)
+		violations := s.StartScan(dir)
 
 		fmt.Printf("🔍 Scanning directory: %s\n", dir)
 		fmt.Println("✅ Scan complete.")
+		fmt.Printf("=> Found %d violations\n", len(violations))
+
+		if sarif {
+			model.GenerateSARIF(violations)
+		}
 	},
 }
 
 func init() {
 
 	scanCmd.Flags().StringP("ignore", "i", "", "ignore directories and files")
-	scanCmd.Flags().StringP("ignore-selective", "s", "", "ignore files and regex combination")
+	//scanCmd.Flags().StringP("ignore-selective", "s", "", "ignore files and regex combination")
+	scanCmd.Flags().BoolP("sarif", "f", false, "generate output in SARIF format")
 
 	rootCmd.AddCommand(scanCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// scanCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// scanCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

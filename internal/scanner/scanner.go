@@ -44,14 +44,16 @@ func (s *SecretScanner) SetVerbose(verbose string) {
 	}
 }
 
-func (s *SecretScanner) StartScan(path string) {
-	s.scanDir(path)
+func (s *SecretScanner) StartScan(path string) []model.Violation {
+	return s.scanDir(path)
 }
 
-func (s *SecretScanner) scanFile(path string) {
+func (s *SecretScanner) scanFile(path string) []model.Violation {
+
+	var vt []model.Violation
 	file, err := os.Open(path)
 	if err != nil {
-		return
+		return vt
 	}
 	defer file.Close()
 
@@ -61,14 +63,29 @@ func (s *SecretScanner) scanFile(path string) {
 		line := scanner.Text()
 		for _, re := range s.allPatterns {
 			if re.RegexVal.MatchString(line) {
-				fmt.Printf("❌ Possible %s in %s:%d\n", re.Name, path, lineNum)
+				msg := fmt.Sprintf("❌ Possible %s in %s:%d\n", re.Name, path, lineNum)
+				fmt.Print(msg)
+				vt = append(vt, model.Violation{
+					RuleID:     re.Name,
+					LineNumber: lineNum,
+					FilePath:   path,
+					Line:       line,
+					Level:      re.Severity,
+					Message:    msg,
+				})
 			}
 		}
 		lineNum++
 	}
+
+	return vt
+
 }
 
-func (s *SecretScanner) scanDir(root string) {
+func (s *SecretScanner) scanDir(root string) []model.Violation {
+
+	var violation []model.Violation
+
 	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 
 		if err != nil {
@@ -106,9 +123,17 @@ func (s *SecretScanner) scanDir(root string) {
 		if s.verbose {
 			fmt.Println("Scanning file:", path)
 		}
-		s.scanFile(path)
+		vt := s.scanFile(path)
+
+		if len(vt) > 0 {
+			violation = append(violation, vt...)
+		}
 		return nil
 	})
+
+	fmt.Println("ret")
+
+	return violation
 }
 
 func isBinary(path string) bool {
