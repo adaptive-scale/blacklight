@@ -61,7 +61,7 @@ func (s *SecretScanner) scanFile(path string) {
 		line := scanner.Text()
 		for _, re := range s.allPatterns {
 			if re.RegexVal.MatchString(line) {
-				fmt.Printf("[!] Possible %s in %s:%d\n", re.Name, path, lineNum)
+				fmt.Printf("❌ Possible %s in %s:%d\n", re.Name, path, lineNum)
 			}
 		}
 		lineNum++

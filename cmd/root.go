@@ -14,7 +14,9 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "blacklight",
 	Short: "A pluggable secret scanner",
-	Long:  `Allows users to scan code, files for secrets.`,
+	Long: `Allows users to scan code, files for secrets.
+version: 0.1.0
+`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
