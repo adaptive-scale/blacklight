@@ -34,11 +34,11 @@ blacklight scan .
 
 To ignore certain directories:
 ```bash
-blacklight scan <path> --ignore=<dir1>,<dir2>
+blacklight scan . --ignore=<dir1>,<dir2>
 ```
 
 To ignore scan and generate SARIF report:
 ```bash
-blacklight scan <path> --ignore=<dir1>,<dir2> --sarif
+blacklight scan . --ignore=<dir1>,<dir2> --sarif
 ```
 
