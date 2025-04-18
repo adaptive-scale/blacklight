@@ -42,3 +42,5 @@ To ignore scan and generate SARIF report:
 blacklight scan . --ignore=<dir1>,<dir2> --sarif
 ```
 
+## Adding custom regexes:
+You can add the custom regexes as json file inside `~/.blacklight/`. The binary automatically picks up the configuration and executes them.
