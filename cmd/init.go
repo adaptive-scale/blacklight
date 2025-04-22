@@ -6,8 +6,8 @@ package cmd
 
 import (
 	"blacklight/internal/scanner"
-	"encoding/json"
 	"fmt"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path"
 
@@ -39,9 +39,9 @@ Should generate all configuration and scanner regexes.
 			return
 		}
 
-		join := path.Join(home, ".blacklight", "config.json")
+		join := path.Join(home, ".blacklight", "config.yaml")
 
-		d, err := json.Marshal(scanner.Regex)
+		d, err := yaml.Marshal(scanner.Regex)
 		if err != nil {
 			fmt.Println("Error marshalling configuration:", err)
 			return
@@ -54,6 +54,22 @@ Should generate all configuration and scanner regexes.
 		}
 
 		fmt.Println("=> created configuration " + join)
+
+		parser := path.Join(home, ".blacklight", "parser.yaml")
+
+		d1, err := yaml.Marshal(scanner.Parser)
+		if err != nil {
+			fmt.Println("Error marshalling configuration:", err)
+			return
+		}
+
+		err = os.WriteFile(parser, d1, os.FileMode(0755))
+		if err != nil {
+			fmt.Println("Error reading directory:", err)
+			return
+		}
+
+		fmt.Println("=> created configuration " + parser)
 
 	},
 }

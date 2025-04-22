@@ -108,3 +108,18 @@ var Regex = []model.Configuration{
 	{Name: "Kubernetes Secret YAML", Regex: `apiVersion: v1\s+kind: Secret`, Severity: 2},
 	//{Name: "Sensitive JSON Key", Regex: `"?(auth|token|secret|key|pass|pwd)"?\s*:\s*"[^"]{8,}"`, Severity: 2},
 }
+
+var Parser = []model.Parser{
+	{
+		Parser:         "JSON",
+		ParserFunction: `scanner.JSON`,
+		Internal:       true,
+		FileExt:        ".json",
+	},
+	{
+		Parser:         "All",
+		ParserFunction: `scanner.All`,
+		Internal:       true,
+		FileExt:        "*",
+	},
+}
