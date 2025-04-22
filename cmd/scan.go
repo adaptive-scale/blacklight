@@ -7,12 +7,11 @@ package cmd
 import (
 	"blacklight/internal/model"
 	"blacklight/internal/scanner"
-	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 	"os"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -64,7 +63,7 @@ blacklight scan /path/to/dir
 				continue
 			}
 
-			if filepath.Ext(f.Name()) == ".json" {
+			if f.Name() == "config.yaml" {
 
 				fmt.Println("=> found configuration " + f.Name())
 				d, err := os.ReadFile(path.Join(home, ".blacklight", f.Name()))
@@ -72,7 +71,7 @@ blacklight scan /path/to/dir
 					fmt.Println("Error reading file:", err)
 					continue
 				}
-				if err := json.Unmarshal(d, &conf); err != nil {
+				if err := yaml.Unmarshal(d, &conf); err != nil {
 					fmt.Println("Error reading configuration in JSON:", err)
 					continue
 				}
