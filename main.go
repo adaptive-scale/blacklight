@@ -1,5 +1,5 @@
 /*
-Copyright © 2025 Debarshi Basak <debarshi@adaptive.live>
+Copyright © 2025 Debarshi Basak
 */
 package main
 

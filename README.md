@@ -338,12 +338,138 @@ The table output uses go-pretty for enhanced readability:
 ╰──────────────────────────┴──────────┴──────────┴─────────┴───────────────────────────────────╯
 ```
 
+## Default Rules
+
+Blacklight comes with a comprehensive set of pre-configured rules for detecting various types of secrets and sensitive information:
+
+### Authentication & Authorization
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| AWS Access Key | Amazon Web Services access key ID | High |
+| AWS Secret Key | Amazon Web Services secret access key | High |
+| Generic API Key | Generic API key patterns | Medium |
+| JWT Token | JSON Web Token | Medium |
+| Basic Auth | Basic Authentication credentials | High |
+| OAuth Client Secret | OAuth 2.0 client secret | High |
+| OAuth Access Token | OAuth 2.0 access token | High |
+| SSH Private Key | SSH private key content | High |
+
+### Cloud Services
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| Azure Storage Account Key | Azure storage account access key | High |
+| GCP Service Account | Google Cloud Platform service account key | High |
+| Firebase Database URL | Firebase realtime database URL | Medium |
+| Heroku API Key | Heroku platform API key | High |
+| Digital Ocean Token | DigitalOcean API token | High |
+| Cloudflare API Key | Cloudflare API key and token | High |
+| AWS Session Token | AWS temporary session token | High |
+
+### Payment & Financial
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| Stripe API Key | Stripe secret API key | High |
+| Stripe Restricted Key | Stripe restricted API key | High |
+| PayPal Access Token | PayPal OAuth2 access token | High |
+| Square Access Token | Square OAuth2 access token | High |
+| Credit Card Number | Credit card number patterns | High |
+
+### Database & Storage
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| PostgreSQL Connection | PostgreSQL connection string | High |
+| MySQL Connection | MySQL connection string | High |
+| MongoDB Connection | MongoDB connection URI | High |
+| Redis Connection | Redis connection string | High |
+| Elasticsearch Connection | Elasticsearch connection string | Medium |
+
+### Communication & Messaging
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| Slack Token | Slack API token and webhook URL | High |
+| Slack Webhook | Slack incoming webhook URL | Medium |
+| Discord Token | Discord bot token | High |
+| Discord Webhook | Discord webhook URL | Medium |
+| Twilio API Key | Twilio API key | High |
+| SendGrid API Key | SendGrid API key | High |
+
+### Development & CI/CD
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| GitHub Token | GitHub personal access token | High |
+| GitLab Token | GitLab personal access token | High |
+| NPM Token | NPM authentication token | Medium |
+| Docker Registry | Docker registry credentials | Medium |
+| CircleCI Token | CircleCI API token | High |
+| Jenkins Token | Jenkins API token | High |
+
+### AI & Machine Learning
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| OpenAI API Key | OpenAI API key | High |
+| Hugging Face Token | Hugging Face API token | High |
+| Anthropic API Key | Anthropic API key | High |
+| Cohere API Key | Cohere API key | High |
+| Replicate API Token | Replicate API token | High |
+
+### Analytics & Monitoring
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| Google Analytics | Google Analytics API key | Medium |
+| New Relic Key | New Relic license key | High |
+| Datadog API Key | Datadog API key | High |
+| Sentry DSN | Sentry client key | Medium |
+| Mixpanel Token | Mixpanel project token | Medium |
+
+### Generic Patterns
+| Rule Name | Description | Severity |
+|-----------|-------------|----------|
+| Private Key | Generic private key content | High |
+| Password in URL | Password in URL parameters | High |
+| Environment Variable | Hardcoded environment variables | Medium |
+| IP Address | Private IP addresses | Low |
+| Internal Path | Internal system paths | Low |
+
+### Custom Rules
+
+You can add your own custom rules by creating a file at `~/.blacklight/rules.yaml`:
+
+```yaml
+- id: "custom_api_key"
+  name: "Custom API Key"
+  description: "Detects custom API key pattern"
+  regex: "myapi_[a-zA-Z0-9]{32}"
+  severity: 2
+  type: "api"
+  disabled: false
+
+- id: "internal_token"
+  name: "Internal Service Token"
+  description: "Internal service authentication token"
+  regex: "int_[a-zA-Z0-9]{24}"
+  severity: 3
+  type: "auth"
+  disabled: false
+```
+
+### Rule Properties
+
+| Property | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `id` | Unique identifier | Yes | `aws_access_key` |
+| `name` | Human-readable name | Yes | "AWS Access Key" |
+| `description` | What the rule detects | No | "Amazon Web Services access key ID" |
+| `regex` | Detection pattern | Yes | `AKIA[0-9A-Z]{16}` |
+| `severity` | 1 (low) to 3 (high) | Yes | 3 |
+| `type` | Category from types list | Yes | "cloud" |
+| `disabled` | Skip this rule | No | false |
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-Copyright © 2025 Debarshi Basak <debarshi@adaptive.live>
+Copyright © 2025 Debarshi Basak 
 
 Licensed under the Apache License, Version 2.0
