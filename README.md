@@ -38,6 +38,35 @@ Blacklight is a powerful secret, keys and sensitive data scanning tool that help
 
 ## Installation
 
+### Quick Install (Linux/macOS)
+
+```bash
+# macOS (Apple Silicon)
+curl -Lo blacklight https://github.com/adaptive-scale/blacklight/releases/latest/download/blacklight-darwin-arm64 && \
+chmod +x blacklight && \
+sudo mv blacklight /usr/local/bin/
+
+# macOS (Intel)
+curl -Lo blacklight https://github.com/adaptive-scale/blacklight/releases/latest/download/blacklight-darwin-amd64 && \
+chmod +x blacklight && \
+sudo mv blacklight /usr/local/bin/
+
+# Linux (x86_64)
+curl -Lo blacklight https://github.com/adaptive-scale/blacklight/releases/latest/download/blacklight-linux-amd64 && \
+chmod +x blacklight && \
+sudo mv blacklight /usr/local/bin/
+
+# Linux (ARM64)
+curl -Lo blacklight https://github.com/adaptive-scale/blacklight/releases/latest/download/blacklight-linux-arm64 && \
+chmod +x blacklight && \
+sudo mv blacklight /usr/local/bin/
+
+# Verify installation
+blacklight version
+```
+
+### Using Go
+
 ```bash
 # Using go install
 go install github.com/adaptive-scale/blacklight@latest
@@ -46,6 +75,35 @@ go install github.com/adaptive-scale/blacklight@latest
 git clone https://github.com/adaptive-scale/blacklight.git
 cd blacklight
 make build
+```
+
+### Docker
+
+```bash
+# Pull the latest image
+docker pull adaptivescale/blacklight:latest
+
+# Run a scan
+docker run -v $(pwd):/workspace adaptivescale/blacklight:latest scan /workspace
+```
+
+### Windows
+
+Download the appropriate `.exe` file from our [releases page](https://github.com/adaptive-scale/blacklight/releases) and add it to your PATH.
+
+### Verifying the Installation
+
+After installation, verify that Blacklight is working correctly:
+
+```bash
+# Check version
+blacklight version
+
+# View help
+blacklight --help
+
+# Run a test scan
+blacklight scan --help
 ```
 
 ## Usage
