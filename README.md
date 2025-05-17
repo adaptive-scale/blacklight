@@ -9,6 +9,7 @@ Blacklight is a powerful secret, keys and sensitive data scanning tool that help
   - Databases (PostgreSQL, MySQL)
   - AWS S3 buckets
   - Slack workspace messages and files
+  - Cloud Storage (Google Drive, Dropbox)
   - Git repositories
 
 - **Advanced Detection**
@@ -17,6 +18,16 @@ Blacklight is a powerful secret, keys and sensitive data scanning tool that help
   - Multi-language support
   - Configurable severity levels
   - Rule categorization
+  - Smart file format detection
+
+- **Supported File Formats**
+  - Plain text files
+  - JSON files (with nested object support)
+  - YAML files (with nested object support)
+  - XML files (with attribute scanning)
+  - INI/Config files
+  - Environment files (.env)
+  - Configuration files
 
 - **User Experience**
   - Cross-platform compatibility (Windows, Linux, macOS)
@@ -53,6 +64,9 @@ blacklight scan --db "postgresql://user:pass@localhost:5432/dbname"
 
 # Scan an S3 bucket
 blacklight scan --s3 "s3://bucket-name"
+
+# Scan cloud storage
+blacklight scan --drive "gdrive://folder-id"
 ```
 
 ### Rule Management
@@ -135,6 +149,100 @@ blacklight slack --token xoxb-your-token --include-threads --include-files
 - Files larger than 10MB are skipped
 - Use the `--days` flag to limit the scan window
 - Specify channels to scan for faster results
+
+## Cloud Storage Scanning
+
+Blacklight can scan files in various cloud storage services for secrets and sensitive information:
+
+### Implemented Providers
+- **Google Drive** (`gdrive://`)
+  - Scans files in specified folders
+  - Supports file content analysis
+  - Respects file size limits
+  - OAuth2 authentication
+  - Automatic file format detection
+  - Recursive folder scanning
+
+- **Dropbox** (`dropbox://`)
+  - Full folder scanning
+  - File content analysis
+  - Path-based access
+  - Access token authentication
+  - Smart file format handling
+  - Size-based file filtering
+
+### Coming Soon
+- **OneDrive** (`onedrive://`) - In development
+- **Box** (`box://`) - Planned
+
+### Authentication
+
+Each provider requires appropriate authentication:
+
+```bash
+# Google Drive - OAuth2 client configuration
+export CLOUD_TOKEN='{"client_id":"...","client_secret":"...","redirect_uris":["..."]}'
+
+# Dropbox - Access Token
+export CLOUD_TOKEN="your-dropbox-access-token"
+```
+
+### Usage Examples
+
+```bash
+# Scan Google Drive folder
+blacklight scan --drive "gdrive://folder-id"
+
+# Scan Dropbox folder
+blacklight scan --drive "dropbox://path/to/folder"
+
+# Include shared files (Google Drive)
+blacklight scan --drive "gdrive://folder-id" --include-shared
+
+# Limit scan history
+blacklight scan --drive "dropbox://folder" --days 7
+
+# Adjust file size limit
+blacklight scan --drive "gdrive://folder-id" --max-size 5242880  # 5MB
+```
+
+### Configuration Options
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--drive, -r` | Cloud storage URL to scan | - |
+| `--include-shared` | Include shared files | false |
+| `--days` | Days of history to scan | 30 |
+| `--max-size` | Maximum file size (bytes) | 10MB |
+
+### File Format Support
+
+The cloud storage scanner automatically detects and processes various file formats:
+
+| Format | Extensions | Detection |
+|--------|------------|-----------|
+| JSON | .json | Extension + Content |
+| YAML | .yaml, .yml | Extension + Content |
+| XML | .xml | Extension |
+| INI | .ini, .conf, .config | Extension |
+| ENV | .env | Extension |
+| Text | others | Default |
+
+### Performance Considerations
+
+- Files larger than the max-size limit are skipped
+- Use `--days` to limit scan scope
+- Specify precise folder paths for faster scans
+- Token expiration is handled automatically
+- File format detection optimizes scanning
+
+### Security Notes
+
+- Tokens should be kept secure and not shared
+- Use read-only access tokens when possible
+- Consider using environment variables for token storage
+- Regularly rotate access tokens
+- Ensure proper access permissions
 
 ## Rule Types
 

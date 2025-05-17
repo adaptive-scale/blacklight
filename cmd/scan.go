@@ -4,6 +4,7 @@ Copyright © 2025 Debarshi Basak <debarshi@adaptive.live>
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -87,11 +88,15 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		dbURL, _ := cmd.Flags().GetString("db")
 		s3URL, _ := cmd.Flags().GetString("s3")
+		cloudURL, _ := cmd.Flags().GetString("drive")
 		filePath, _ := cmd.Flags().GetString("file")
 		sampleSize, _ := cmd.Flags().GetInt("sample-size")
 		ignore, _ := cmd.Flags().GetString("ignore")
 		sarif, _ := cmd.Flags().GetBool("sarif")
 		verbose, _ := cmd.Flags().GetBool("verbose")
+		includeShared, _ := cmd.Flags().GetBool("include-shared")
+		days, _ := cmd.Flags().GetInt("days")
+		maxSize, _ := cmd.Flags().GetInt64("max-size")
 
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -179,6 +184,29 @@ Examples:
 			}
 			violations = s3Violations
 
+		case cloudURL != "":
+			// Cloud storage scanning mode
+			fmt.Printf("🔍 Scanning cloud storage: %s\n", cloudURL)
+			cloudConfig := &scanner.CloudConfig{
+				Token:         os.Getenv("CLOUD_TOKEN"),
+				DaysToScan:    days,
+				IncludeShared: includeShared,
+				MaxFileSize:   maxSize,
+			}
+			cloudScanner, err := scanner.NewCloudScanner(cloudConfig)
+			if err != nil {
+				fmt.Printf("Error initializing cloud scanner: %v\n", err)
+				os.Exit(1)
+			}
+			cloudScanner.AddPattern(allconf...)
+
+			cloudViolations, err := cloudScanner.ScanStorage(context.Background(), cloudURL)
+			if err != nil {
+				fmt.Printf("Error scanning cloud storage: %v\n", err)
+				os.Exit(1)
+			}
+			violations = cloudViolations
+
 		default:
 			// File system scanning mode
 			s := scanner.NewSecretScanner()
@@ -249,9 +277,13 @@ func init() {
 	scanCmd.Flags().StringP("db", "d", "", "database URL to scan (postgres:// or mysql://)")
 	scanCmd.Flags().StringP("file", "f", "", "single file to scan (use proper path format for your OS)")
 	scanCmd.Flags().StringP("s3", "s", "", "S3 bucket URL to scan (s3://bucket/prefix)")
+	scanCmd.Flags().StringP("drive", "r", "", "cloud storage URL to scan (gdrive://, onedrive://, dropbox://, box://)")
 	scanCmd.Flags().IntP("sample-size", "n", 100, "number of records to sample from each column (default 100)")
 	scanCmd.Flags().Bool("sarif", false, "generate output in SARIF format")
 	scanCmd.Flags().BoolP("verbose", "v", false, "show detailed information about violations")
+	scanCmd.Flags().Bool("include-shared", false, "include shared files in cloud storage scan")
+	scanCmd.Flags().Int("days", 30, "number of days of history to scan for cloud storage")
+	scanCmd.Flags().Int64("max-size", 10*1024*1024, "maximum file size to scan in bytes (default 10MB)")
 
 	rootCmd.AddCommand(scanCmd)
 }
