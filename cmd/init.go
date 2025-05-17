@@ -1,15 +1,15 @@
 /*
 Copyright © 2025 Debarshi Basak <debarshi@adaptive.live>
-
 */
 package cmd
 
 import (
-	"blacklight/internal/scanner"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path"
+
+	"github.com/adaptive-scale/blacklight/internal/scanner"
+	"gopkg.in/yaml.v3"
 
 	"github.com/spf13/cobra"
 )

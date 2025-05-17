@@ -1,18 +1,19 @@
 package scanner
 
 import (
-	"blacklight/internal/model"
 	"database/sql"
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/adaptive-scale/blacklight/internal/model"
 
 	_ "github.com/go-sql-driver/mysql" // MySQL driver
 	_ "github.com/lib/pq"              // PostgreSQL driver
 )
 
 type DBScanner struct {
-	patterns []model.Configuration
+	patterns   []model.Configuration
 	sampleSize int
 }
 
@@ -196,13 +197,17 @@ func (s *DBScanner) scanTable(db *sql.DB, tableName string) ([]model.Violation, 
 
 			// Check each pattern against the value
 			for _, pattern := range s.patterns {
-				if pattern.RegexVal.MatchString(value.String) {
+				if pattern.CompiledRegex == nil {
+					fmt.Printf("Warning: Skipping rule %s - regex not compiled\n", pattern.Name)
+					continue
+				}
+				if pattern.CompiledRegex.MatchString(value.String) {
+					context := fmt.Sprintf("Column '%s' contains sensitive data: %s", colName, value.String)
 					violations = append(violations, model.Violation{
-						RuleID:     pattern.Name,
-						Level:      pattern.Severity,
-						Message:    fmt.Sprintf("Found potential %s in table %s, column %s", pattern.Name, tableName, colName),
-						Line:       fmt.Sprintf("Column '%s' contains sensitive data: %s", colName, value.String),
-						FilePath:   fmt.Sprintf("table://%s/%s", tableName, colName),
+						Rule:     pattern,
+						Match:    value.String,
+						Location: fmt.Sprintf("table://%s/%s", tableName, colName),
+						Context:  context,
 					})
 					
 					// Break after first match for this value to avoid duplicate reports

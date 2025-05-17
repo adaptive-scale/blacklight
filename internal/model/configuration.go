@@ -2,13 +2,16 @@ package model
 
 import "regexp"
 
+// Configuration represents a rule for secret scanning
 type Configuration struct {
-	Name     string         `json:"name"`
-	Regex    string         `json:"regex"`
-	Severity int            `json:"severity,omitempty"`
-	Type     string         `json:"type,omitempty"`
-	RegexVal *regexp.Regexp `json:"-"`
-	Disabled bool           `json:"disabled,omitempty"`
+	ID            string         `yaml:"id"`
+	Name          string         `yaml:"name"`
+	Description   string         `yaml:"description"`
+	Regex         string         `yaml:"regex"`
+	CompiledRegex *regexp.Regexp `yaml:"-"` // Compiled version of the regex pattern
+	Severity      int            `yaml:"severity"`
+	Type          string         `yaml:"type"`
+	Disabled      bool           `yaml:"disabled"`
 }
 
 type Parser struct {

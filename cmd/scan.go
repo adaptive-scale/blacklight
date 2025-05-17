@@ -4,13 +4,14 @@ Copyright © 2025 Debarshi Basak <debarshi@adaptive.live>
 package cmd
 
 import (
-	"blacklight/internal/model"
-	"blacklight/internal/scanner"
 	"fmt"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/adaptive-scale/blacklight/internal/model"
+	"github.com/adaptive-scale/blacklight/internal/scanner"
 
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
@@ -25,22 +26,27 @@ func printViolation(index int, v model.Violation, verbose bool) {
 	
 	if verbose {
 		fmt.Printf("\n%s #%d\n", yellow("Violation"), index+1)
-		fmt.Printf("Rule ID:     %s\n", cyan(v.RuleID))
-		fmt.Printf("Severity:    %s\n", getSeverityText(v.Level))
-		fmt.Printf("Location:    %s", cyan(v.FilePath))
-		if v.LineNumber > 0 {
-			fmt.Printf(":%d", v.LineNumber)
+		fmt.Printf("Rule:        %s\n", cyan(v.Rule.Name))
+		fmt.Printf("Severity:    %s\n", getSeverityText(v.Rule.Severity))
+		fmt.Printf("Location:    %s", cyan(v.Location))
+		if v.LineNum > 0 {
+			fmt.Printf(":%d", v.LineNum)
 		}
 		fmt.Println()
-		fmt.Printf("Message:     %s\n", v.Message)
-		if v.Line != "" {
-			fmt.Printf("Found:       %s\n", red(v.Line))
+		if v.Rule.Description != "" {
+			fmt.Printf("Description: %s\n", v.Rule.Description)
+		}
+		if v.Match != "" {
+			fmt.Printf("Found:       %s\n", red(v.Match))
+		}
+		if v.Context != "" {
+			fmt.Printf("Context:     %s\n", v.Context)
 		}
 		fmt.Println(strings.Repeat("-", 80))
 	} else {
-		fmt.Printf("%s: %s in %s", yellow("Found"), red(v.RuleID), cyan(v.FilePath))
-		if v.LineNumber > 0 {
-			fmt.Printf(":%d", v.LineNumber)
+		fmt.Printf("%s: %s in %s", yellow("Found"), red(v.Rule.Name), cyan(v.Location))
+		if v.LineNum > 0 {
+			fmt.Printf(":%d", v.LineNum)
 		}
 		fmt.Println()
 	}
@@ -53,11 +59,11 @@ func getSeverityText(level int) string {
 	green := color.New(color.FgGreen).SprintFunc()
 
 	switch level {
-	case 1:
+	case 3:
 		return red("High")
 	case 2:
 		return yellow("Medium")
-	case 3:
+	case 1:
 		return green("Low")
 	default:
 		return fmt.Sprintf("Unknown (%d)", level)
@@ -126,7 +132,12 @@ Examples:
 				}
 
 				for _, c := range conf {
-					c.RegexVal = regexp.MustCompile(c.Regex)
+					var err error
+					c.CompiledRegex, err = regexp.Compile(c.Regex)
+					if err != nil {
+						fmt.Printf("Error compiling regex for rule %s: %v\n", c.Name, err)
+						continue
+					}
 					allconf = append(allconf, c)
 				}
 			}
