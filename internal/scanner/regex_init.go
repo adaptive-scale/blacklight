@@ -107,6 +107,17 @@ var Regex = []model.Configuration{
 	{Name: "Terraform Variable with Secret", Regex: `variable\s+".*(_secret|_key|_token)"`, Severity: 2},
 	{Name: "Kubernetes Secret YAML", Regex: `apiVersion: v1\s+kind: Secret`, Severity: 2},
 	//{Name: "Sensitive JSON Key", Regex: `"?(auth|token|secret|key|pass|pwd)"?\s*:\s*"[^"]{8,}"`, Severity: 2},
+	{Name: "Credit Card Number (Generic)", Regex: `\b(?:\d[ -]*?){13,16}\b`, Severity: 3, Type: "PCI"},
+	{Name: "Visa Card", Regex: `\b4[0-9]{12}(?:[0-9]{3})?\b`, Severity: 3, Type: "PCI"},
+	{Name: "MasterCard", Regex: `\b5[1-5][0-9]{14}\b`, Severity: 3, Type: "PCI"},
+	{Name: "American Express", Regex: `\b3[47][0-9]{13}\b`, Severity: 3, Type: "PCI"},
+	{Name: "Discover Card", Regex: `\b6(?:011|5[0-9]{2})[0-9]{12}\b`, Severity: 3, Type: "PCI"},
+	{Name: "JCB Card", Regex: `\b(?:2131|1800|35\d{3})\d{11}\b`, Severity: 3, Type: "PCI"},
+	{Name: "CVV Code", Regex: `\b(CVV|CVC|CVV2|CVC2|CVN|CVN2|CID|CAV)\s*?[^A-Za-z0-9\s]\s*?\d{3,4}\b`, Severity: 3, Type: "PCI"},
+	{Name: "Card Expiry Date", Regex: `\b(0[1-9]|1[0-2])[/-]\d{2,4}\b`, Severity: 2, Type: "PCI"},
+	{Name: "Card Holder Name", Regex: `\b(?:CARD[- ]?HOLDER|NAME ON CARD)[: ]+[A-Z][A-Za-z\- ]+\b`, Severity: 2, Type: "PCI"},
+	{Name: "Merchant ID", Regex: `\b(?:MERCHANT|MID)[: ]+\d{6,20}\b`, Severity: 2, Type: "PCI"},
+	{Name: "Payment Gateway API Key", Regex: `\b(?:STRIPE|PAYPAL|SQUARE|BRAINTREE|AUTHORIZE\.NET)[: ]+[A-Za-z0-9_-]{20,}\b`, Severity: 3, Type: "PCI"},
 }
 
 var Parser = []model.Parser{
