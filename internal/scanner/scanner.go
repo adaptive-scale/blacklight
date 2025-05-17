@@ -1,141 +1,218 @@
 package scanner
 
 import (
-	"blacklight/internal/model"
 	"bufio"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
+
+	"github.com/adaptive-scale/blacklight/internal/model"
+
+	"gopkg.in/yaml.v3"
 )
 
 type SecretScanner struct {
-	allPatterns     []model.Configuration
-	ignoreDir       map[string]*struct{}
-	ignoreSelective map[string]string
-	verbose         bool
+	patterns    []model.Configuration
+	ignoreDirs  []string
+	verbose     bool
 }
 
 func NewSecretScanner() *SecretScanner {
 	return &SecretScanner{
-		allPatterns:     []model.Configuration{},
-		ignoreDir:       map[string]*struct{}{},
-		ignoreSelective: map[string]string{},
+		ignoreDirs: []string{".git", "node_modules", "vendor"},
 	}
 }
 
-func (s *SecretScanner) AddPattern(pattern ...model.Configuration) {
-	s.allPatterns = append(s.allPatterns, pattern...)
-}
+func (s *SecretScanner) loadRules() error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("error getting home directory: %v", err)
+	}
 
-func (s *SecretScanner) AddIgnoreDir(dir string) {
-	s.ignoreDir[dir] = &struct{}{}
-}
+	configDir := filepath.Join(home, ".blacklight")
+	configFile := filepath.Join(configDir, "config.yaml")
 
-func (s *SecretScanner) AddIgnoreSelective(path, pattern string) {
-	s.ignoreSelective[path] = pattern
+	// Load user-defined rules
+	if data, err := os.ReadFile(configFile); err == nil {
+		var configs []model.Configuration
+		if err := yaml.Unmarshal(data, &configs); err != nil {
+			return fmt.Errorf("error parsing config file: %v", err)
+		}
+		// Compile regex patterns
+		for i := range configs {
+			if pattern, err := regexp.Compile(configs[i].Regex); err == nil {
+				configs[i].CompiledRegex = pattern
+			} else {
+				fmt.Printf("Warning: Invalid regex pattern in rule %s: %v\n", configs[i].Name, err)
+			}
+		}
+		s.patterns = append(s.patterns, configs...)
+	}
+
+	// Load built-in rules if no user rules found
+	if len(s.patterns) == 0 {
+		// Compile regex patterns for built-in rules
+		for i := range Regex {
+			if pattern, err := regexp.Compile(Regex[i].Regex); err == nil {
+				Regex[i].CompiledRegex = pattern
+			} else {
+				fmt.Printf("Warning: Invalid regex pattern in built-in rule %s: %v\n", Regex[i].Name, err)
+			}
+		}
+		s.patterns = append(s.patterns, Regex...)
+	}
+
+	return nil
 }
 
 func (s *SecretScanner) SetVerbose(verbose string) {
-	if verbose == "true" {
-		s.verbose = true
-	} else {
-		s.verbose = false
+	s.verbose = verbose != ""
+}
+
+func (s *SecretScanner) AddIgnoreDir(dir string) {
+	s.ignoreDirs = append(s.ignoreDirs, dir)
+}
+
+func (s *SecretScanner) AddPattern(patterns ...model.Configuration) {
+	s.patterns = append(s.patterns, patterns...)
+}
+
+func (s *SecretScanner) shouldIgnore(path string) bool {
+	for _, dir := range s.ignoreDirs {
+		if strings.Contains(path, dir) {
+			return true
+		}
 	}
+	return false
 }
 
 func (s *SecretScanner) StartScan(path string) []model.Violation {
-	return s.scanDir(path)
+	var violations []model.Violation
+
+	// Check if path is a file
+	info, err := os.Stat(path)
+	if err != nil {
+		fmt.Printf("Error accessing path %s: %v\n", path, err)
+		return violations
+	}
+
+	if !info.IsDir() {
+		// Single file scan
+		fileViolations := s.scanFile(path)
+		violations = append(violations, fileViolations...)
+		return violations
+	}
+
+	// Directory scan
+	err = filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
+		if err != nil {
+			fmt.Printf("Error accessing path %s: %v\n", filePath, err)
+			return nil
+		}
+
+		if info.IsDir() {
+			if s.shouldIgnore(filePath) {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+
+		if s.shouldIgnore(filePath) {
+			return nil
+		}
+
+		fileViolations := s.scanFile(filePath)
+		violations = append(violations, fileViolations...)
+		return nil
+	})
+
+	if err != nil {
+		fmt.Printf("Error walking directory %s: %v\n", path, err)
+	}
+
+	return violations
 }
 
-func (s *SecretScanner) scanFile(path string) []model.Violation {
+func (s *SecretScanner) scanFile(filePath string) []model.Violation {
+	var violations []model.Violation
 
-	var vt []model.Violation
-	file, err := os.Open(path)
+	file, err := os.Open(filePath)
 	if err != nil {
-		return vt
+		fmt.Printf("Error opening file %s: %v\n", filePath, err)
+		return violations
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
-	lineNum := 1
+	lineNum := 0
+
 	for scanner.Scan() {
+		lineNum++
 		line := scanner.Text()
-		for _, re := range s.allPatterns {
-			if re.RegexVal.MatchString(line) {
-				msg := fmt.Sprintf("❌ Possible %s in %s:%d\n", re.Name, path, lineNum)
-				fmt.Print(msg)
-				vt = append(vt, model.Violation{
-					RuleID:     re.Name,
-					LineNumber: lineNum,
-					FilePath:   path,
-					Line:       line,
-					Level:      re.Severity,
-					Message:    msg,
+
+		for _, pattern := range s.patterns {
+			if pattern.CompiledRegex != nil && pattern.CompiledRegex.MatchString(line) {
+				// Get context around the match
+				match := pattern.CompiledRegex.FindString(line)
+				context := getMatchContext(line, match)
+
+				violations = append(violations, model.Violation{
+					Rule:     pattern,
+					Match:    match,
+					Location: filePath,
+					LineNum:  lineNum,
+					Context:  context,
 				})
+
+				if s.verbose {
+					fmt.Printf("Found potential %s in %s:%d\n", pattern.Name, filePath, lineNum)
+				}
 			}
 		}
-		lineNum++
 	}
 
-	return vt
+	if err := scanner.Err(); err != nil {
+		fmt.Printf("Error scanning file %s: %v\n", filePath, err)
+	}
 
+	return violations
 }
 
-func (s *SecretScanner) scanDir(root string) []model.Violation {
+// getMatchContext returns a snippet of text around the matched string
+func getMatchContext(line, match string) string {
+	const contextLength = 50 // characters before and after the match
 
-	var violation []model.Violation
+	start := strings.Index(line, match)
+	if start == -1 {
+		return line
+	}
 
-	_ = filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+	// Calculate context boundaries
+	contextStart := start - contextLength
+	if contextStart < 0 {
+		contextStart = 0
+	}
+	contextEnd := start + len(match) + contextLength
+	if contextEnd > len(line) {
+		contextEnd = len(line)
+	}
 
-		if err != nil {
-			return nil
-		}
+	// Add ellipsis if context is truncated
+	prefix := ""
+	if contextStart > 0 {
+		prefix = "..."
+	}
+	suffix := ""
+	if contextEnd < len(line) {
+		suffix = "..."
+	}
 
-		if s.ignoreDir[path] != nil {
-			if s.verbose {
-				fmt.Println("Ignoring directory/file:", path)
-			}
-			return nil
-		}
-
-		for s2, _ := range s.ignoreDir {
-			if strings.HasPrefix(path, s2) {
-				if s.verbose {
-					fmt.Println("Ignoring directory/file:", path)
-				}
-				return nil
-			}
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-		// Skip binaries or large files
-		if info.Size() > 1*1024*1024 {
-			return nil
-		}
-		// Basic binary detection
-		if isBinary(path) {
-			return nil
-		}
-
-		if s.verbose {
-			fmt.Println("Scanning file:", path)
-		}
-		vt := s.scanFile(path)
-
-		if len(vt) > 0 {
-			violation = append(violation, vt...)
-		}
-		return nil
-	})
-
-	fmt.Println("ret")
-
-	return violation
+	return prefix + line[contextStart:contextEnd] + suffix
 }
 
+// isBinary checks if a file is likely binary
 func isBinary(path string) bool {
 	file, err := os.Open(path)
 	if err != nil {
