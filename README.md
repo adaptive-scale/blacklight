@@ -1,4 +1,5 @@
 # Blacklight
+<img width="438" alt="Screenshot 2025-05-31 at 02 16 47" src="https://github.com/user-attachments/assets/6e8e0841-b0d4-45d7-a704-93b0d333b7a2" />
 
 Blacklight is a powerful secret, keys and sensitive data scanning tool that helps you detect and prevent sensitive information leaks in your codebase, databases, cloud storage, and communication platforms.
 
